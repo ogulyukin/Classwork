@@ -1,14 +1,14 @@
 #include <iostream>
 #include <initializer_list>
-
+#define tab "\t"
 using namespace std;
 
-template <typename T> class Tree{
+class Tree{
     class Element{
-        T Data;
+        int Data;
         Element *pLeft, *pRight;
     public:
-        Element(T Data, Element* pLeft = nullptr, Element* pRight = nullptr): Data(Data), pLeft(pLeft), pRight(pRight){
+        Element(int Data, Element* pLeft = nullptr, Element* pRight = nullptr): Data(Data), pLeft(pLeft), pRight(pRight){
             //cout  << "EConstructor\t" << this << endl;
         }
         ~Element(){
@@ -25,7 +25,7 @@ template <typename T> class Tree{
         cout << Root->Data << "\t";
         print(Root->pRight);
     }
-    void insert(T Data, Element* Root){ // Корневой элемент от ветки
+    void insert(int Data, Element* Root){ // Корневой элемент от ветки
         if (this->Root == nullptr)this->Root = new Element(Data);
         if (Root == nullptr) //Если зашли в ветку а она пустая - выходим из нее
             return;
@@ -38,7 +38,7 @@ template <typename T> class Tree{
             else Root->pRight = new Element(Data);
         }
     }
-    void erase(T Data, Element*& Root){
+    void erase(int Data, Element*& Root){
        if (Root == nullptr)return;
         erase(Data, Root->pLeft);
         erase(Data, Root->pRight);
@@ -63,22 +63,76 @@ template <typename T> class Tree{
         clear(Root->pRight);
         delete Root;
     }
-    T min(Element* Root){
+    int min(Element* Root){
         if (Root->pLeft == nullptr)
             return Root->Data;
         else return min(Root->pLeft);
     }
-    T max(Element* Root){
+    int max(Element* Root){
         return Root->pRight ? max(Root->pRight) : Root->Data;
     }
-    T count(Element* Root){
+    int count(Element* Root){
         if(Root == nullptr)return 0;
         return (Root->is_leaf()) ? 1 : count(Root->pLeft) + count(Root->pRight) + 1;
     }
-    T summ(Element* Root){
+    int summ(Element* Root){
         return Root == nullptr ? 0 : summ(Root->pLeft) + summ(Root->pRight) + Root->Data;
     }
 public:
+    class Iterator{
+        Element*& Root;
+        Element* Temp;
+    public:
+        Iterator(Element* Root) : Temp(Temp){
+            cout << "ITConstructor:\t" << this << endl;
+        }
+        ~Iterator(){
+            cout << "ITDestructor:\t" << this << endl;
+        }
+        int& operator*(){
+            return Temp->Data;
+        }
+        const int& operator*()const{
+            return Temp->Data;
+        }
+        bool operator==(const Iterator& other)const{
+            return this->Temp == other.Temp;
+        }
+        bool operator!=(const Iterator& other)const{
+            return this->Temp != other.Temp;
+        }
+        Iterator& operator++(){
+            find_next();
+            return *this;
+        }/*
+        operator Element*()const{
+            return Temp;
+        }*/
+        Element*& operator->(){
+            return Temp;
+        }
+    };
+    Iterator begin(){
+        return find(min(this->Root),this->Root);
+    }
+    Iterator end(){
+        return  find(max(this->Root), this->Root);
+    }
+    Element*& find(int Data, Element*& Root){
+        if (Root == nullptr)return Root;
+        find(Data, Root->pLeft);
+        find(Data, Root->pRight);
+        if (Root->Data == Data)
+            return Root;
+    }
+    Element*& find_next(Element *& Root, Element* Parent = nullptr){
+        if(Root->pLeft == nullptr)return Root;
+        if(Root->pRight)find_next(Root->pRight, Root);
+        find_next(Root->pLeft, Root);
+    }
+    Element*& find_next(){
+        find_next(this->Root);
+    }
     Element* getRoot(){
         return this->Root;
     }
@@ -88,8 +142,8 @@ public:
     Tree(const Tree &other) : Tree(){
         copy(other.Root);
     }
-    Tree(const initializer_list<T> il):Tree(){
-        for(T i:il){
+    Tree(const initializer_list<int> il):Tree(){
+        for(int i:il){
             this->insert(i);
         }
     }
@@ -105,7 +159,7 @@ public:
         if (Root->pRight) copy(Root->pRight);
         return;
     }
-    void insert(T Data){
+    void insert(int Data){
         insert(Data, this->Root);
     }
     void print(){
@@ -117,24 +171,24 @@ public:
         clear(this->Root);
         this->Root = nullptr;
     }
-    T min(){
+    int min(){
         if (this->Root == nullptr)
             return 0;
         return min(this->Root);
     }
-    T max(){
+    int max(){
         return this->Root ? max(this->Root) : 0;
     }
-    T size(){
+    int size(){
         return this->Root ? count(this->Root) : 0;
     }
-    T summ(){
+    int summ(){
         return summ(this->Root);
     }
     double avg(){
         return double (summ(this->Root)) / count(this->Root);
     }
-    void erase(T Data){
+    void erase(int Data){
         erase(Data, Root);
     }
     Tree operator=(const Tree &other){
@@ -147,11 +201,11 @@ public:
 int main() {
     setlocale(LC_ALL, "");
     srand(time(0));
-    /*Tree<double> T1;
+    Tree T1;
     int n;
     cout << "Enter Tree size: "; cin >> n;
     for(int i = 0; i < n; i++){
-        T1.insert(rand());
+        T1.insert(rand()%100);
     }
     T1.print();
     cout << "Минимальное значение дерева\t" << T1.min() << endl;
@@ -159,12 +213,14 @@ int main() {
     cout << "Количество элементов дерева\t" << T1.size() << endl;
     cout <<  "Сумма элементов дерева\t" << T1.summ() << endl;
     cout <<  "Среднее арифметическое элементов дерева\t" << T1.avg() << endl;
-    Tree<double> T2;
-    T2 = T1;
-    T2.print();*/
+    for(Tree::Iterator it = T1.begin(); it != T1.end(); ++it){
+        cout << *it << tab;
+    }
+    cout << endl;
+     /*
     Tree<int> T3 = {50, 25, 16 ,32, 8, 85, 16, 62, 62, 80, 91, 98};
     T3.print();
     T3.erase(8);
-    T3.print();
+    T3.print();*/
     return 0;
 }
